@@ -1,0 +1,32 @@
+{
+  "canisters": {
+    "dao_backend": {
+      "main": "src/dao_backend/main.mo",
+      "type": "motoko"
+    },
+    "dao_webspage": {
+      "main": "src/dao_webpage/main.mo",
+      "type": "motoko"
+    },
+    "dao_frontend": {
+      "dependencies": [
+        "dao_backend"
+      ],
+      "frontend": {
+        "entrypoint": "src/dao_frontend/src/index.html"
+      },
+      "source": [
+        "src/dao_frontend/assets",
+        "dist/dao_frontend/"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "version": 1
+}
