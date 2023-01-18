@@ -16,3 +16,7 @@ This contains the ledger of proposals, tracks votes and, when voting period is o
 ## DAO Interface
 
 This provides a user friendly interface for creating proposals and for voting.
+
+## Links
+
+Custom domain: <https://internetcomputer.org/docs/current/developer-docs/deploy/custom-domain#creating-the-custom-service-worker>
