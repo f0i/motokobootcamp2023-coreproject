@@ -4,7 +4,7 @@
       "main": "src/dao_backend/main.mo",
       "type": "motoko"
     },
-    "dao_webspage": {
+    "dao_webpage": {
       "main": "src/dao_webpage/main.mo",
       "type": "motoko"
     },
