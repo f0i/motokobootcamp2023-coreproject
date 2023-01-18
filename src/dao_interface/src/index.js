@@ -1,4 +1,9 @@
 import { dao_backend } from "../../declarations/dao_backend";
+import Alpine from 'alpinejs'
+
+window.Alpine = Alpine
+
+Alpine.start()
 
 document.querySelector("form").addEventListener("submit", async (e) => {
   e.preventDefault();
