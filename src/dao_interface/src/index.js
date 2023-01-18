@@ -3,22 +3,8 @@ import Alpine from 'alpinejs'
 
 window.Alpine = Alpine
 
-Alpine.start()
+//Alpine.store('darkMode', { on: false, toggle() { this.on = !this.on } })
+//Alpine.data('backend', dao_backend);
+Alpine.start();
 
-document.querySelector("form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const button = e.target.querySelector("button");
-
-  const name = document.getElementById("name").value.toString();
-
-  button.setAttribute("disabled", true);
-
-  // Interact with foo actor, calling the greet method
-  const greeting = await dao_backend.greet(name);
-
-  button.removeAttribute("disabled");
-
-  document.getElementById("greeting").innerText = greeting;
-
-  return false;
-});
+window.backend = dao_backend;
