@@ -1,6 +1,6 @@
-# Motoko Bootcamp 2023 Coreproject
+# Motoko Bootcamp 2023 Core Project
 
-This projects implements a DAO to controll the content of a webpage.
+This projects implements a DAO to control the content of a webpage.
 
 It is part of the Motoko Bootcamp 2023.
 

@@ -38,7 +38,7 @@ const canisterEnvVariables = initCanisterEnv();
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-const frontendDirectory = "dao_frontend";
+const frontendDirectory = "dao_interface";
 
 const frontend_entry = path.join("src", frontendDirectory, "src", "index.html");
 
