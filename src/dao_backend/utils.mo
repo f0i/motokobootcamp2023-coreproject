@@ -2,8 +2,8 @@ import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Principal "mo:base/Principal";
-import Principal "mo:base/Principal";
-import Principal "mo:base/Principal";
+import Hash "mo:base/Hash";
+import Int32 "mo:base/Int32";
 
 /// Helper functions
 module Utils {
@@ -22,9 +22,9 @@ module Utils {
     };
 
     public func prinipalNatTupleHash((p : Principal, n : Nat)) : Hash.Hash {
-        let hash1 : Int = Principal.hash(n1);
-        let hash2 : Int = n;
-        return Int32.fromIntWrap(hash1 + hash2);
+        let hash1 = Principal.hash(p);
+        let hash2 = Nat32.fromIntWrap(n);
+        return hash1 ^ hash2;
     };
 
 };

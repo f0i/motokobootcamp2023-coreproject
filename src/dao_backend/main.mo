@@ -6,61 +6,57 @@ import Utils "utils";
 import Principal "mo:base/Principal";
 import Proposal "proposal";
 import Iter "mo:base/Iter";
-import TrieMap "mo:base/TrieMap";
 import List "mo:base/List";
 import Vote "vote";
 import Buffer "mo:base/Buffer";
+import Debug "mo:base/Debug";
+import { nyi } "mo:base/Prelude";
+import Result "mo:base/Result";
 
 actor {
 
   // Storage of the data during upgrades
-  stable var stableVotes : [Vote.Vote] = [];
-  stable var stableProposals : [Proposal.Proposal] = [];
+  stable var stableProposals : [Proposal.StableProposal] = [];
 
   // Storage of the data
-  var proposals = Buffer.fromArray<Proposal.Proposal>(stableProposals);
-  var votes = Buffer.fromArray<Vote.Vote>(stableVotes);
+  var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
 
   // Type alias for expressive index of inside the above Lists
   type ProposalIndex = Nat;
   type VoteIndex = Nat;
-  type TrieMap = TrieMap.TrieMap;
 
-  // lookup tables
-  var votesByUser = TrieMap<Principal, VoteIndex>(Principal.equal, Principal.hash);
-  var votesByUserAndProposal = TrieMap.TrieMap<(Principal, Nat), VoteIndex>(Utils.principalNatEqual, Utils.principalNatHash);
-  var votesByProposal = TrieMap<ProposalIndex, List<VoteIndex>>(Nat.equal, Int32.fromIntWrap);
-
-  // Update lookup tables
-  for (i in Iter.range(0, votes.size() - 1)) {
-    let vote = votes.get(i);
+  public shared ({ caller }) func submitProposal(text : Text) : async ProposalIndex {
+    // TODO: check if caller has permission to create proposal
+    proposals.add(Proposal.create(caller, Utils.minutesToNs(100), text));
+    return proposals.size() - 1;
   };
 
-  public query func get_proposal() : async Text {
-    return ""; // TODO: implement
+  public query func getProposal(index : ProposalIndex) : async Proposal.StableProposal {
+    let proposal = proposals.get(index);
+    return Proposal.toStable(proposal);
   };
 
-  public query func get_all_proposals(from : Nat, limit : Nat) : async [(Nat, Proposal.Proposal)] {
-    return []; // TODO: implement
-  };
-
-  public query func get_my_proposals(from : Nat, limit : Nat) : async [(Nat, Proposal.Proposal)] {
-    return []; // TODO: implement
+  public query func getProposals(from : Nat, limit : Nat) : async [(Nat, Proposal.StableProposal)] {
+    nyi(); // TODO: implement
   };
 
   public func vote(id : Nat, vote : Bool) {
-    // TODO: implement
+    nyi(); // TODO: implement
   };
+
+  public func modifyParameters() : async Result.Result<(), ()> {
+    nyi(); // TODO: implement
+  };
+
+  //quadratic_voting createNeuron dissolveNeuron
 
   // Handle upgrades
 
   system func preupgrade() {
-    stableProposals := Buffer.toArray(proposals);
-    stableVotes := Buffer.toArray(votes);
+    stableProposals := Iter.toArray(Iter.map(proposals.vals(), Proposal.toStable));
   };
 
   system func postupgrade() {
     stableProposals := [];
-    stableVotes := [];
   };
 };
