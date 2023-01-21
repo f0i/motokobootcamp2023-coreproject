@@ -1,0 +1,10 @@
+#!/usr/bin/expect
+
+spawn dfx [lindex $argv 0]
+
+expect "Please enter the passphrase for your identity:\r"
+
+send [lindex $argv 1]
+send -- "\r"
+interact
+expect eof

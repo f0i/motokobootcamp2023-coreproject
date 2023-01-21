@@ -128,6 +128,7 @@ Base64 encoding.
             3 - bytes.size() % 3 : Nat;
         };
         let padded_bytes = Array.append(bytes, Array.tabulate<Nat8>(pad_len, func(_) { 0 }));
+        //let padded_bytes = Array.tabulate<Nat8>(bytes.size() + pad_len, func(i) { if (i < bytes.size()) { bytes[i] } else { 0 } });
         var out = "";
         for (j in Iter.range(1, padded_bytes.size() / 3)) {
             let i = j - 1 : Nat; // annoying inclusive upper bound in Iter.range
