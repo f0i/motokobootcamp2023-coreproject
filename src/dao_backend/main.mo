@@ -20,24 +20,27 @@ import Float "mo:base/Float";
 import Array "mo:base/Array";
 import Webpage "webpage";
 import Parameter "parameter";
+import Neuron "neuron";
 
-actor {
-
-  // Storage of the data during upgrades
-  stable var stableProposals : [Proposal.StableProposal] = [];
-  let maxProposalsPerRequest = 100;
-  let mbToken = MbToken.getCanister();
-  let dao_webpage = Webpage.getCanister();
-
-  // Storage of the data
-  var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
-
+actor Self {
   // Type alias for expressive index of inside the above Lists
   type ProposalIndex = Nat;
   type VoteIndex = Nat;
   type Result<OK, ERR> = Result.Result<OK, ERR>;
   type StableProposal = Proposal.StableProposal;
   type Parameter = Parameter.Parameter;
+  type Neuron = Neuron.Neuron;
+
+  // Storage of the data during upgrades
+  stable var stableProposals : [Proposal.StableProposal] = [];
+  stable var stableNeurons : [(Principal, Neuron)] = [];
+  let maxProposalsPerRequest = 100;
+  let mbToken = MbToken.getCanister();
+  let dao_webpage = Webpage.getCanister();
+
+  // Storage of the data
+  var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
+  var neurons = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
 
   /// update function to add a new proposal
   public shared ({ caller }) func submitProposal(text : Text) : async Result<ProposalIndex, Proposal.ProposeError> {
@@ -117,6 +120,16 @@ actor {
   };
 
   public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) {
+    if (amount < 10 ** 8) throw Error.reject("Amount too low");
+
+    // Initiate transfer
+    let status = await mbToken.icrc1_transfer(
+      MbToken.createTransferArgs(
+        caller,
+        Principal.fromActor(Self),
+        amount,
+      ),
+    );
 
     nyi(); // TODO: implement
   };
