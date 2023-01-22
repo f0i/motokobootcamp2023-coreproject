@@ -11,16 +11,60 @@
 </head>
 
 <body>
-  <main x-data="{name: 'motoko', message: 'not set'}">
-    <img src="logo2.svg" alt="DFINITY logo" />
+  <main x-data="{
+    draft: '',
+    proposals: dao.backend.getProposals(-100, 100),
+  }" x-effect="console.log(proposals)">
+    <img src=" motoko2160.svg" width="200px" alt="Motoko logo" />
+    <br />
+    <div>
+      <span x-text="dao.errorMsg"></span>
+    </div>
+    <br />
+    <template x-if="dao.plug_available">
+      <template x-if="!dao.plug_connected">
+        <button @click="dao.plug_connect()">Connect plug wallet</button>
+      </template>
+      <template x-if="!dao.plug_connected">
+        <span>Plug connected</span>
+      </template>
+    </template>
+    <template x-if="!dao.plug_available">
+      <div>
+        Plug wallet is not installed.
+        Get it at <a href="https://plugwallet.ooo/">plugwallet.ooo</a>.
+      </div>
+    </template>
     <br />
     <br />
-    <form action="#">
-      <label for="name">Enter your name: &nbsp;</label>
-      <input alt="Name" type="text" x-model="name" />
-      <button @click="message = backend.greet(name)">Click Me!</button>
-    </form>
-    <section id="greeting" x-text="message"></section>
+    <label for="name">New Proposal: &nbsp;</label>
+    <input alt="Name" type="text" x-model="draft" />
+    <button @click="message = dao.backend.callerBalance()">Submit proposal!</button>
+
+    <div>
+      <button @click="proposals = dao.backend.getProposals(-100, 100)">Get proposals</button>
+      <ul>
+        <template x-for="p in proposals">
+          <li>
+            ID <span x-text="p[0]"></span>: <br>
+            Proposed text: <span x-text="p[1].content"></span> <br>
+            created at: <span
+              x-text="new Date(Number(p[1].createdAt / BigInt(1000000))).toISOString().replace('T',' ').replace('Z', '')"></span>
+            <br>
+            votes: <span x-text="p[1].votes.length"></span> <br>
+            status: <span x-text="Object.keys(p[1].status)"></span> <br>
+            supported: <span x-text="p[1].supported"></span> <br>
+            rejected: <span x-text="p[1].rejected"></span> <br>
+            <br>
+            <button @click="dao.backend.vote(p[0], {support: null})">support</button>
+            <button @click="await dao.backend.vote(p[0], {support: null})" x-on:error="console.log(123)">reject</button>
+            <div x-bind:promise="dao.promise" x-on:abort="function(e){console.log(1234)}"></div>
+          </li>
+        </template>
+      </ul>
+    </div>
+
+    <section id="greeting" x-text="draft"></section>
   </main>
 </body>
 

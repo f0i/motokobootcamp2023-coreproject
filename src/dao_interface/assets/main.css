@@ -35,3 +35,7 @@ button[type="submit"] {
 #greeting:empty {
     display: none;
 }
+
+li {
+    margin: 1em 3em;
+}

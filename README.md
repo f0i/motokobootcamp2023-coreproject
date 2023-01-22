@@ -62,10 +62,13 @@ dfx generate # generate declarations
 dfx identity use test2021
 dfx wallet --network ic balance
 
-#Create canister on IC
+# Create canister on IC
 dfx canister --network ic create dao_backend --with-cycles 1000000000000 --controller xlesp-lrnfo-bihzg-l5rwa-c2h2r-vukct-pjab5-rj5f7-6664l-uu6qx-cae
-pw=insertYourDfxPassword dfx build --network ic
-dfx canister --network ic install dao_backend
+# repeat for each canister
+
+dfx generate --network ic
+dfx build --network ic
+dfx canister --network ic install --mode auto dao_interface
 ```
 
 ## Links and Resources

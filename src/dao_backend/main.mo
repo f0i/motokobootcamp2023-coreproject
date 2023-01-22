@@ -16,6 +16,7 @@ import { compose } "mo:base/Func";
 import Int "mo:base/Int";
 import Error "mo:base/Error";
 import MbToken "mb_token";
+import Float "mo:base/Float";
 
 actor {
 
@@ -76,11 +77,14 @@ actor {
 
   /// Submit your vote
   public shared ({ caller }) func vote(proposal_id : ProposalIndex, vote : Vote.Decision) : async Result.Result<(), Proposal.VotingError> {
+
+    let balance = await mbToken.icrc1_balance_of({
+      owner = caller;
+      subaccount = null;
+    });
+    let votingPower : Float = Float.fromInt(balance) / Float.pow(10, 8);
+
     let proposal = proposals.get(proposal_id);
-
-    // TODO: check MB balance
-    let votingPower : Float = 1;
-
     return Proposal.vote(proposal, caller, votingPower, vote);
   };
 
@@ -101,7 +105,10 @@ actor {
   };
 
   public shared ({ caller }) func callerBalance() : async Nat {
-    let balance = await mbToken.icrc1_balance_of(caller);
+    let balance = await mbToken.icrc1_balance_of({
+      owner = caller;
+      subaccount = null;
+    });
     return balance;
   };
 

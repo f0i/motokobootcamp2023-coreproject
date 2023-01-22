@@ -6,7 +6,7 @@ module MbToken {
     type Account = { owner : Principal; subaccount : ?Subaccount };
 
     public func getCanister() : actor {
-        icrc1_balance_of : (Principal) -> async Nat;
+        icrc1_balance_of : (Account) -> async Nat;
         icrc1_name : () -> async Text;
         icrc1_symbol : () -> async Text;
     } {
