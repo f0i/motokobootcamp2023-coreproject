@@ -22,7 +22,7 @@ The content is controlled by the DAO.
 
 ## DAO Backend
 
-<https://6z67s-fiaaa-aaaah-ab4hq-cai.ic0.app>
+<https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6x4s2-6yaaa-aaaah-ab4gq-cai> (Candid UI)
 
 This contains the ledger of proposals, tracks votes and, when voting period is over, push updates to the webpage canister.
 
@@ -39,6 +39,8 @@ The container provides the following functionality:
   - Push text to DAO Webpage
 
 ## DAO Interface
+
+<https://6z67s-fiaaa-aaaah-ab4hq-cai.ic0.app>
 
 This provides a user friendly interface for creating proposals and for voting.
 
@@ -80,5 +82,11 @@ dfx generate --network ic && dfx build --network ic && dfx canister --network ic
 ```
 
 ## Links and Resources
+
+Github: <https://github.com/f0i>
+
+Core project: <https://github.com/f0i/motokobootcamp2023-coreproject>
+
+Motoko challenges: <https://github.com/f0i/motokobootcamp2023>
 
 Custom domain: <https://internetcomputer.org/docs/current/developer-docs/deploy/custom-domain#creating-the-custom-service-worker>

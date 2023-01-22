@@ -116,7 +116,8 @@ actor {
     nyi(); // TODO: implement
   };
 
-  public func createNeuron() {
+  public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) {
+
     nyi(); // TODO: implement
   };
   public func dissolveNeuron() {
