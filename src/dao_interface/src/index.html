@@ -101,12 +101,14 @@
           supported: <span x-text="p[1].supported"></span> <br>
           rejected: <span x-text="p[1].rejected"></span> <br>
           <br>
-          <button @click="$store.dao.vote(p[0], true)">
-            support 👍
-          </button>
-          <button @click="$store.dao.vote(p[0], false)">
-            reject 👎
-          </button>
+          <div x-show="p[1].status.hasOwnProperty('active')">
+            <button @click="$store.dao.vote(p[0], true)">
+              support 👍
+            </button>
+            <button @click="$store.dao.vote(p[0], false)">
+              reject 👎
+            </button>
+          </div>
         </div>
       </template>
     </div>
