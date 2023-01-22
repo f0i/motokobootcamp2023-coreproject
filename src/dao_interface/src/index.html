@@ -101,11 +101,11 @@
           supported: <span x-text="p[1].supported"></span> <br>
           rejected: <span x-text="p[1].rejected"></span> <br>
           <br>
-          <button @click="dao.backend_plug.vote(p[0], {support: null})">
-            support
+          <button @click="$store.dao.vote(p[0], true)">
+            support 👍
           </button>
-          <button @click="await dao.backend_plug.vote(p[0], {reject: null})" x-on:error="console.log(123)">
-            reject
+          <button @click="$store.dao.vote(p[0], false)">
+            reject 👎
           </button>
         </div>
       </template>

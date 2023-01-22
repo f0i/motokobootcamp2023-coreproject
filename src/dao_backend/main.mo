@@ -18,6 +18,8 @@ import Error "mo:base/Error";
 import MbToken "mb_token";
 import Float "mo:base/Float";
 import Array "mo:base/Array";
+import Webpage "webpage";
+import Parameter "parameter";
 
 actor {
 
@@ -25,6 +27,7 @@ actor {
   stable var stableProposals : [Proposal.StableProposal] = [];
   let maxProposalsPerRequest = 100;
   let mbToken = MbToken.getCanister();
+  let dao_webpage = Webpage.getCanister();
 
   // Storage of the data
   var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
@@ -34,6 +37,7 @@ actor {
   type VoteIndex = Nat;
   type Result<OK, ERR> = Result.Result<OK, ERR>;
   type StableProposal = Proposal.StableProposal;
+  type Parameter = Parameter.Parameter;
 
   /// update function to add a new proposal
   public shared ({ caller }) func submitProposal(text : Text) : async Result<ProposalIndex, Proposal.ProposeError> {
@@ -42,7 +46,7 @@ actor {
       subaccount = null;
     });
 
-    if (balance < 2) return #err(#notEnoughVotingPower);
+    if (balance < 1) return #err(#notEnoughVotingPower);
 
     proposals.add(Proposal.create(caller, 100, text));
     return #ok(proposals.size() - 1);
@@ -97,13 +101,13 @@ actor {
     switch (result) {
       case (#err(e)) { return #err(e) };
       case (#ok(#accepted)) {
-        webpage;
+        await dao_webpage.updateText(proposal.content);
+        return #ok;
       };
       case (#ok(_)) { return #ok };
     };
   };
 
-  type Parameter = { #maxPowerFactor : Float };
   public func modifyParameters(parameter : Parameter) : async Result.Result<(), ()> {
     nyi(); // TODO: implement
   };

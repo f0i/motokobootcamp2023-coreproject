@@ -16,7 +16,7 @@ shared ({ caller = admin }) actor class Main() = this {
 
   /// Set a new string
   /// can only be called from the dao_backend
-  public shared ({ caller }) func update_text(new_text : Text) : async () {
+  public shared ({ caller }) func updateText(new_text : Text) : async () {
     assert (caller == dao_backend or caller == dao_backend_local);
 
     current_text := Text.encodeUtf8(new_text);

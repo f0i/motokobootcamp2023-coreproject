@@ -89,7 +89,7 @@ module Proposal {
         proposal.votes.put(voter, vote);
 
         // check result
-        if (proposal.supported + proposal.rejected > 100) {
+        if (proposal.supported > 100 or proposal.rejected > 100) {
             if (proposal.supported > proposal.rejected) {
                 proposal.status := #accepted;
             } else {

@@ -9,6 +9,8 @@ and summarized in this document, as well as additional requirements and features
 
 ## DAO Webpage
 
+<https://667zg-iqaaa-aaaah-ab4ha-cai.ic0.app> (without `.raw` \o/ )
+
 This is a webpage served by a motoko canister.
 The content is controlled by the DAO.
 
@@ -19,6 +21,8 @@ The content is controlled by the DAO.
   - Check if call is coming from DAO Backend
 
 ## DAO Backend
+
+<https://6z67s-fiaaa-aaaah-ab4hq-cai.ic0.app>
 
 This contains the ledger of proposals, tracks votes and, when voting period is over, push updates to the webpage canister.
 
