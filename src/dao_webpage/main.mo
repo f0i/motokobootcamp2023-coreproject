@@ -4,7 +4,7 @@ import CertifiedData "mo:base/CertifiedData";
 import HashTree "hash_tree";
 import Principal "mo:base/Principal";
 
-actor {
+shared ({ caller = admin }) actor class Main() = this {
   public type HttpReq = Http.HttpRequest;
   public type HttpRes = Http.HttpResponse;
 

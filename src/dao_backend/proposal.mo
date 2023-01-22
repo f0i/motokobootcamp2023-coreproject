@@ -12,6 +12,7 @@ module Proposal {
 
     type Status = { #active; #accepted; #rejected };
     public type VotingError = { #notActive; #notEnoughVotingPower };
+    public type ProposeError = { #notEnoughVotingPower };
 
     type Vote = Vote.Vote;
     type TrieMap<K, V> = TrieMap.TrieMap<K, V>;
@@ -53,7 +54,8 @@ module Proposal {
     };
 
     /// Add a vote for the user to a proposal, if proposal is active
-    public func vote(proposal : Proposal.Proposal, voter : Principal, votingPower : Float, decision : Vote.Decision) : Result.Result<(), VotingError> {
+    /// Returns a result with the total voting power in this proposal or a voting error
+    public func vote(proposal : Proposal.Proposal, voter : Principal, votingPower : Float, decision : Vote.Decision) : Result.Result<Status, VotingError> {
         if (votingPower < 1) {
             return #err(#notEnoughVotingPower);
         };
@@ -62,8 +64,6 @@ module Proposal {
         if (not Proposal.isActive(proposal)) {
             return #err(#notActive);
         };
-
-        let vote = Vote.init(decision, votingPower);
 
         // Remove old vote from count
         switch (proposal.votes.get(voter)) {
@@ -85,9 +85,19 @@ module Proposal {
         };
 
         // store vote
+        let vote = Vote.init(decision, votingPower);
         proposal.votes.put(voter, vote);
 
-        return #ok;
+        // check result
+        if (proposal.supported + proposal.rejected > 100) {
+            if (proposal.supported > proposal.rejected) {
+                proposal.status := #accepted;
+            } else {
+                proposal.status := #rejected;
+            };
+        };
+
+        return #ok(proposal.status);
     };
 
     /// Check if a proposal is currently active

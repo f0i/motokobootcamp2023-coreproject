@@ -66,9 +66,13 @@ dfx wallet --network ic balance
 dfx canister --network ic create dao_backend --with-cycles 1000000000000 --controller xlesp-lrnfo-bihzg-l5rwa-c2h2r-vukct-pjab5-rj5f7-6664l-uu6qx-cae
 # repeat for each canister
 
+# update the canister
 dfx generate --network ic
 dfx build --network ic
 dfx canister --network ic install --mode auto dao_interface
+
+# or in one line
+dfx generate --network ic && dfx build --network ic && dfx canister --network ic install --mode auto dao_interface
 ```
 
 ## Links and Resources

@@ -11,25 +11,35 @@
 </head>
 
 <body>
-  <main x-data="{
-    draft: '',
-    proposals: dao.backend.getProposals(-100, 100),
-  }" x-effect="console.log(proposals)">
-    <img src=" motoko2160.svg" width="200px" alt="Motoko logo" />
-    <br />
-    <div>
-      <span x-text="dao.errorMsg"></span>
+  <main x-data x-effect="console.log($store.dao)">
+
+    <!-- Banner -->
+
+    <dir class="banner">
+      <img src=" motoko2160.svg" width="200px" alt="Motoko logo" />
+      <h1>Motoko Bootcamp Webpage DAO</h1>
+      <h3>by <a href="https://f0i.de/about" target="_blank">f0i</a></h3>
+      <br />
+    </dir>
+
+    <!-- Error messages -->
+
+    <div style="width: 100%;">
+      <pre id="errors" @click="clearErrors()"></pre>
     </div>
     <br />
-    <template x-if="dao.plug_available">
-      <template x-if="!dao.plug_connected">
-        <button @click="dao.plug_connect()">Connect plug wallet</button>
+
+    <!-- Plug login button -->
+
+    <template x-if="$store.dao.plug_available">
+      <template x-if="!$store.dao.plug_connected">
+        <button @click="$store.dao.plug_connect()">Connect plug wallet</button>
       </template>
-      <template x-if="!dao.plug_connected">
+      <template x-if="!$store.dao.plug_connected">
         <span>Plug connected</span>
       </template>
     </template>
-    <template x-if="!dao.plug_available">
+    <template x-if="!$store.dao.plug_available">
       <div>
         Plug wallet is not installed.
         Get it at <a href="https://plugwallet.ooo/">plugwallet.ooo</a>.
@@ -37,34 +47,70 @@
     </template>
     <br />
     <br />
-    <label for="name">New Proposal: &nbsp;</label>
-    <input alt="Name" type="text" x-model="draft" />
-    <button @click="message = dao.backend.callerBalance()">Submit proposal!</button>
+
+    <!-- Caller balance -->
+    <div>
+      Current MB balance: <span x-text="$store.dao.mb_balance"></span>
+      <button @click="$store.dao.updateBalance()">
+        update balance
+      </button>
+    </div>
+    <br />
+    <br />
+
+    <!-- Create proposals -->
+
+    <div id="new-proposal">
+      <label for="name">New Proposal: &nbsp;</label>
+      <input alt="Name" type="text" x-model="$store.dao.draft" />
+
+      <template x-if="$store.dao.draft !== ''">
+        <div class="proposal">
+          <section x-text="$store.dao.draft"></section> <br>
+          <br>
+          <button @click="$store.dao.submitProposal()">
+            Submit proposal!
+          </button>
+        </div>
+      </template>
+    </div>
+    <br />
+
+    <!-- List proposals -->
 
     <div>
-      <button @click="proposals = dao.backend.getProposals(-100, 100)">Get proposals</button>
-      <ul>
-        <template x-for="p in proposals">
-          <li>
-            ID <span x-text="p[0]"></span>: <br>
-            Proposed text: <span x-text="p[1].content"></span> <br>
-            created at: <span
-              x-text="new Date(Number(p[1].createdAt / BigInt(1000000))).toISOString().replace('T',' ').replace('Z', '')"></span>
-            <br>
-            votes: <span x-text="p[1].votes.length"></span> <br>
-            status: <span x-text="Object.keys(p[1].status)"></span> <br>
-            supported: <span x-text="p[1].supported"></span> <br>
-            rejected: <span x-text="p[1].rejected"></span> <br>
-            <br>
-            <button @click="dao.backend.vote(p[0], {support: null})">support</button>
-            <button @click="await dao.backend.vote(p[0], {support: null})" x-on:error="console.log(123)">reject</button>
-            <div x-bind:promise="dao.promise" x-on:abort="function(e){console.log(1234)}"></div>
-          </li>
-        </template>
-      </ul>
+      <button @click="$store.dao.updateProposals()">
+        Update proposals
+      </button>
     </div>
 
-    <section id="greeting" x-text="draft"></section>
+    <div class="proposals">
+      <template x-for="p in $store.dao.proposals">
+        <div class="proposal">
+          <h4>
+            Proposal <span x-text="p[0]"></span>: <br>
+          </h4>
+          Proposed text: <br>
+          <span class="content" x-text="p[1].content"></span> <br>
+          <br>
+          created at: <span
+            x-text="new Date(Number(p[1].createdAt / BigInt(10**6))).toISOString().replace('T',' ').slice(0, -8)"></span>
+          <br>
+          votes: <span x-text="p[1].votes.length"></span> <br>
+          status: <span x-text="Object.keys(p[1].status)"></span> <br>
+          supported: <span x-text="p[1].supported"></span> <br>
+          rejected: <span x-text="p[1].rejected"></span> <br>
+          <br>
+          <button @click="dao.backend_plug.vote(p[0], {support: null})">
+            support
+          </button>
+          <button @click="await dao.backend_plug.vote(p[0], {reject: null})" x-on:error="console.log(123)">
+            reject
+          </button>
+        </div>
+      </template>
+    </div>
+
   </main>
 </body>
 

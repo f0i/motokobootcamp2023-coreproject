@@ -17,12 +17,13 @@ import Int "mo:base/Int";
 import Error "mo:base/Error";
 import MbToken "mb_token";
 import Float "mo:base/Float";
+import Array "mo:base/Array";
 
 actor {
 
   // Storage of the data during upgrades
   stable var stableProposals : [Proposal.StableProposal] = [];
-  let maxProposalsPerRequest = 50;
+  let maxProposalsPerRequest = 100;
   let mbToken = MbToken.getCanister();
 
   // Storage of the data
@@ -31,17 +32,24 @@ actor {
   // Type alias for expressive index of inside the above Lists
   type ProposalIndex = Nat;
   type VoteIndex = Nat;
+  type Result<OK, ERR> = Result.Result<OK, ERR>;
+  type StableProposal = Proposal.StableProposal;
 
   /// update function to add a new proposal
-  public shared ({ caller }) func submitProposal(text : Text) : async ProposalIndex {
-    // TODO: check if caller has permission to create proposals
+  public shared ({ caller }) func submitProposal(text : Text) : async Result<ProposalIndex, Proposal.ProposeError> {
+    let balance = await mbToken.icrc1_balance_of({
+      owner = caller;
+      subaccount = null;
+    });
+
+    if (balance < 2) return #err(#notEnoughVotingPower);
 
     proposals.add(Proposal.create(caller, 100, text));
-    return proposals.size() - 1;
+    return #ok(proposals.size() - 1);
   };
 
   /// Return a single proposal
-  public query func getProposal(index : ProposalIndex) : async Proposal.StableProposal {
+  public query func getProposal(index : ProposalIndex) : async StableProposal {
     // check index
     if (index >= proposals.size()) throw Error.reject("Proposal ID does not exist");
 
@@ -50,7 +58,7 @@ actor {
   };
 
   /// Get a list of proposals
-  public query func getProposals(from : Int, limit : Nat) : async [(Nat, Proposal.StableProposal)] {
+  public query func getProposals(from : Int, limit : Nat) : async [(Nat, StableProposal)] {
     // check range
     var start = if (from >= 0) {
       Int.abs(from); // "cast" positive `Int` to `Nat`
@@ -72,7 +80,7 @@ actor {
         return (i, Proposal.toStable(proposals.get(i)));
       },
     );
-    return Iter.toArray(props);
+    return Array.reverse(Iter.toArray(props));
   };
 
   /// Submit your vote
@@ -85,7 +93,14 @@ actor {
     let votingPower : Float = Float.fromInt(balance) / Float.pow(10, 8);
 
     let proposal = proposals.get(proposal_id);
-    return Proposal.vote(proposal, caller, votingPower, vote);
+    let result = Proposal.vote(proposal, caller, votingPower, vote);
+    switch (result) {
+      case (#err(e)) { return #err(e) };
+      case (#ok(#accepted)) {
+        webpage;
+      };
+      case (#ok(_)) { return #ok };
+    };
   };
 
   type Parameter = { #maxPowerFactor : Float };

@@ -1,6 +1,18 @@
 body {
     font-family: sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.15rem;
+    background-color: #222;
+    color: antiquewhite;
+}
+
+main {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.banner {
+    text-align: center;
+    width: 100%;
 }
 
 img {
@@ -8,6 +20,10 @@ img {
     max-height: 25vw;
     display: block;
     margin: auto;
+}
+
+a {
+    color: antiquewhite;
 }
 
 form {
@@ -26,16 +42,46 @@ button[type="submit"] {
     float: right;
 }
 
-#greeting {
-    margin: 10px auto;
-    padding: 10px 60px;
-    border: 1px solid #222;
-}
-
-#greeting:empty {
-    display: none;
-}
 
 li {
     margin: 1em 3em;
+}
+
+#errors {
+    color: rgb(156, 71, 71);
+    border: solid 1px rgb(156, 71, 71);
+    border-radius: 8px;
+    font-size: 0.9em;
+    padding: 1em;
+    width: calc(100% - 2em - 2px);
+}
+
+#errors:empty {
+    display: none;
+}
+
+#new-proposal {
+    border: solid 1px rgb(119, 73, 161);
+    border-radius: 8px;
+    padding: 1em;
+    width: calc(100% - 2em - 2px);
+}
+
+.proposal {
+    border: solid 1px rgb(160, 139, 48);
+    border-radius: 8px;
+    padding: 1em;
+    margin: 0.5em;
+    width: calc(33.33% - 3em - 2px);
+}
+
+.proposal>.content {
+    color: rgb(160, 139, 48);
+}
+
+.proposals {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    width: 100%;
 }
