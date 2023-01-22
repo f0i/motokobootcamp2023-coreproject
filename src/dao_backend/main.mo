@@ -40,7 +40,7 @@ actor Self {
 
   // Storage of the data
   var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
-  var neurons = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
+  var neurons = HashMap.HashMap<Principal, Neuron>(0, Principal.equal, Principal.hash);
 
   /// update function to add a new proposal
   public shared ({ caller }) func submitProposal(text : Text) : async Result<ProposalIndex, Proposal.ProposeError> {
@@ -149,9 +149,11 @@ actor Self {
 
   system func preupgrade() {
     stableProposals := Iter.toArray(Iter.map(proposals.vals(), Proposal.toStable));
+    stableNeurons := Iter.toArray(neurons.entries());
   };
 
   system func postupgrade() {
     stableProposals := [];
+    stableNeurons := [];
   };
 };
