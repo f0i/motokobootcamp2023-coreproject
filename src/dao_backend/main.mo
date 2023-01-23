@@ -128,7 +128,7 @@ actor Self {
 
   /// Check user balance and create a neuron
   /// Frontend should use getTransferArgs() and initiate a transfer with the connected wallet before calling this function
-  public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) : async Result<(), MbToken.TransferError> {
+  public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) : async () {
     if (amount < 10 ** 8) throw Error.reject("Amount too low");
 
     // check if caller already has a neuron
@@ -154,8 +154,6 @@ actor Self {
     // create neuron for user
     let neuron = Neuron.create(balance, delay);
     neurons.put(caller, neuron);
-
-    return #ok;
   };
 
   /// Initiate a MBT transfer and top up neuron
@@ -163,9 +161,7 @@ actor Self {
 
     // check if caller already has a neuron
     let neuron = switch (neurons.get(caller)) {
-      case (?neuron) {
-        neuron;
-      };
+      case (?neuron) { neuron };
       case (null) {
         throw Error.reject("You don't have a neuron :(");
       };
@@ -175,6 +171,7 @@ actor Self {
       throw Error.reject("Transaction in progress");
     };
 
+    // check balance in subaccount of caller
     let self = Principal.fromActor(Self);
     let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(self, ?caller));
     if (balance < 10 ** 8) throw Error.reject("Amount too low");

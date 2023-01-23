@@ -42,10 +42,10 @@ Alpine.store('dao', {
     mb_balance: "-",
     neuron: {},
     //{
-    //    amount: 12,
+    //    amount: BigInt(12_000_000_000),
     //    dissolving: false,
-    //    age: 10 * (10 ** 9),
-    //    delay: 100 * (10 ** 9)
+    //    age: BigInt(10 * (10 ** 9)),
+    //    delay: BigInt(100 * (10 ** 9))
     //},
     lockFor: 0.001,
     amount: 1.0,
@@ -182,7 +182,8 @@ Alpine.store('dao', {
         let args = await this.backend.getTransferArgs(amount)
         let res = await this.mbToken.icrc1_transfer(args);
         console.log("transfer result:", res);
-        await this.backend.topUpNeuron(amount);
+        let res2 = await this.backend.topUpNeuron();
+        console.log("topup result:", res2);
         this.getNeuron();
     },
 
