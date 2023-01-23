@@ -62,11 +62,11 @@
     <div class="neuron">
       <h4>Your neuron:</h4>
       <button @click="$store.dao.getNeuron()">
-        update neuron info 🔃
+        Update neuron info 🔃
       </button> <br>
       <br>
       <div x-show="$store.dao.neuron?.amount">
-        Balance <span x-text="$store.dao.neuron?.amount"></span> <br>
+        Balance <span x-text="Number($store.dao.neuron?.amount) / 100_000_000"></span> MBT <br>
       </div>
       <div x-show="!$store.dao.neuron?.amount">
         <p>
@@ -74,11 +74,16 @@
         </p>
       </div>
       <div x-show="$store.dao.neuron?.amount">
-        Amount: <span x-text="$store.dao.neuron?.amount"></span>
-        Locked: <span x-text="$store.dao.neuron?.locked"></span>
-        Dissolve delay: <span x-text="$store.dao.neuron?.delay"></span>
-        Age: <span x-text="$store.dao.neuron?.age"></span>
+        Mode: <span x-show="!$store.dao.neuron?.dissolving">Locked</span>
+        <span x-show="$store.dao.neuron?.dissolving && $store.dao.neuron?.delay">Dissolving</span>
+        <span x-show="$store.dao.neuron?.dissolving && !$store.dao.neuron?.delay">Dissolved</span>
+        <br>
+        Dissolve delay: <span x-text="(Number($store.dao.neuron?.delay || 0)  / 60_000_000_000).toFixed(2);"></span>
+        minutes <br>
+        Age: <span x-text="(Number($store.dao.neuron?.age) / 60_000_000_000).toFixed(2)"></span> minutes
       </div>
+      <br>
+      <br>
 
       <label for="lock">Lock in days: &nbsp;</label>
       <input alt="Lock for" type="number" min="0" max="1460" step="0.001" x-model="$store.dao.lockFor" />

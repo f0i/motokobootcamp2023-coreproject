@@ -96,8 +96,15 @@ actor Self {
   /// Submit your vote
   public shared ({ caller }) func vote(proposal_id : ProposalIndex, vote : Vote.Decision) : async Result.Result<(), Proposal.VotingError> {
 
-    let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(caller, null));
-    let votingPower : Float = Float.fromInt(balance) / Float.pow(10, 8);
+    // check in user controlled account
+    //let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(caller, null));
+    //let votingPower : Float = Float.fromInt(balance) / Float.pow(10, 8);
+
+    // check in dao controlled account
+    let votingPower = switch (neurons.get(caller)) {
+      case (?neuron) { Neuron.votingPower(neuron) };
+      case (null) { 0.0 };
+    };
 
     let proposal = proposals.get(proposal_id);
     let result = Proposal.vote(proposal, caller, votingPower, vote);
@@ -119,46 +126,40 @@ actor Self {
     nyi(); // TODO: implement
   };
 
-  /// Initiate a MBT transfer and create neuron
+  /// Check user balance and create a neuron
+  /// Frontend should use getTransferArgs() and initiate a transfer with the connected wallet before calling this function
   public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) : async Result<(), MbToken.TransferError> {
     if (amount < 10 ** 8) throw Error.reject("Amount too low");
 
     // check if caller already has a neuron
     switch (neurons.get(caller)) {
       case (?neuron) {
-        throw Error.reject("Neuron already exists. Maybe use 'increase amount' instead?");
+        throw Error.reject("Neuron already exists. Maybe use 'Add more tokens' instead?");
       };
       case (null) {};
     };
 
+    // TODO: looks like this lock is not needed anymore
     if (not Lock.lock(locks, caller)) {
       throw Error.reject("Transaction in progress");
     };
 
-    // Initiate transfer
-    let status = await mbToken.icrc1_transfer(
-      MbToken.createRxTransferArgs(
-        caller,
-        Principal.fromActor(Self),
-        amount,
-      ),
-    );
+    // check balance in subaccount of caller
+    let self = Principal.fromActor(Self);
+    let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(self, ?caller));
+    if (balance < 10 ** 8) throw Error.reject("Amount too low");
+
     Lock.release(locks, caller);
-    switch (status) {
-      case (#err(error)) { return #err(error) };
-      case (#ok(_id)) {};
-    };
 
     // create neuron for user
-    let neuron = Neuron.create(amount, delay);
+    let neuron = Neuron.create(balance, delay);
     neurons.put(caller, neuron);
 
     return #ok;
   };
 
   /// Initiate a MBT transfer and top up neuron
-  public shared ({ caller }) func topUpNeuron(amount : Nat) : async Result<(), MbToken.TransferError> {
-    if (amount < 10 ** 8) throw Error.reject("Amount too low");
+  public shared ({ caller }) func topUpNeuron() : async Result<(), MbToken.TransferError> {
 
     // check if caller already has a neuron
     let neuron = switch (neurons.get(caller)) {
@@ -174,23 +175,14 @@ actor Self {
       throw Error.reject("Transaction in progress");
     };
 
-    // Initiate transfer
-    let status = await mbToken.icrc1_transfer(
-      MbToken.createRxTransferArgs(
-        caller,
-        Principal.fromActor(Self),
-        amount,
-      ),
-    );
+    let self = Principal.fromActor(Self);
+    let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(self, ?caller));
+    if (balance < 10 ** 8) throw Error.reject("Amount too low");
+
     Lock.release(locks, caller);
-    switch (status) {
-      case (#err(error)) { return #err(error) };
-      case (#ok(_id)) {};
-    };
 
     // update neuron amount
-    let newAmount = neuron.amount + amount;
-    neuron.amount := newAmount;
+    neuron.amount := balance;
 
     return #ok;
   };
@@ -225,7 +217,6 @@ actor Self {
       };
       case (null) {
         throw Error.reject("You don't have a neuron :(");
-
       };
     };
   };
@@ -238,7 +229,6 @@ actor Self {
       };
       case (null) {
         throw Error.reject("You don't have a neuron :(");
-
       };
     };
   };
@@ -262,9 +252,9 @@ actor Self {
 
     // Initiate transfer
     let status = await mbToken.icrc1_transfer(
-      MbToken.createRxTransferArgs(
-        caller,
+      MbToken.createTxTransferArgs(
         Principal.fromActor(Self),
+        caller,
         neuron.amount,
       ),
     );

@@ -1,14 +1,15 @@
 import Alpine from 'alpinejs'
+import moment from 'moment';
 
 // Imports and re-exports candid interface
-//import { dao_backend } from "../../declarations/dao_backend";
 import { idlFactory, canisterId, dao_backend } from "../../declarations/dao_backend";
 
 import { idlFactory as icrc1 } from "./icrc1.did";
 
 const mbTokenId = "db3eq-6iaaa-aaaah-abz6a-cai";
 
-window.Alpine = Alpine
+window.Alpine = Alpine;
+window.moment = moment;
 
 // display all errors
 window.onerror = function (e, url, line) {
@@ -38,8 +39,8 @@ const nnsCanisterIds = [
 Alpine.store('dao', {
     draft: '',
     proposals: [],
-    mb_balance: 0,
-    neuron: null,
+    mb_balance: "-",
+    neuron: {},
     //{
     //    amount: 12,
     //    dissolving: false,
@@ -108,25 +109,32 @@ Alpine.store('dao', {
     },
 
     async updateBalance() {
-        this.mb_balance = 0.0;
+        this.mb_balance = "-";
         await this.assertPlug();
         let res = await this.backend.callerBalance();
-        this.mb_balance = res / BigInt(10 ** 8);
+        this.mb_balance = Number(res) / 100_000_000;
     },
 
     async getNeuron() {
         await this.assertPlug();
-        this.neuron = await this.backend.getNeuron();
+        console.log("get neuron");
+        let neuron = await this.backend.getNeuron();
+        this.neuron = neuron[0];
+        console.log("get neuron returned:", neuron);
     },
 
     getAmount() {
         let amount = parseFloat(this.amount) || 0;
-        return BigInt(amount) * BigInt(10 ** 8)
+        return Math.floor(amount * 100_000_000);
     },
 
     getDelay() {
-        let time = parseFloat(this.delay) || 0;
-        return BigInt(time) * BigInt(24 * 60 * 60 * 1000000000);
+        let time = parseFloat(this.lockFor) || 0;
+        return Math.floor(time * 24 * 60 * 60 * 1000000000);
+    },
+
+    getNeuronAmount() {
+        return this.neuron?.amount
     },
 
     async createNeuron() {
@@ -136,32 +144,39 @@ Alpine.store('dao', {
         let res = await this.mbToken.icrc1_transfer(args);
         console.log("transfer result:", res);
         let delay = this.getDelay();
-        this.neuron = await this.backend.createNeuron(amount, delay);
-        await getNeuron();
+        let result = await this.backend.createNeuron(amount, delay);
+        console.log("create neuron returned:", result);
+
+        this.updateBalance();
+        this.getNeuron();
     },
 
     async lockNeuron() {
         await this.assertPlug();
         await this.backend.lockNeuron(this.getDelay());
-        await getNeuron();
+        this.getNeuron();
     },
 
     async dissolveNeuron() {
         await this.assertPlug();
         await this.backend.dissolveNeuron();
-        await getNeuron();
+        this.getNeuron();
     },
 
     async disburseNeuron() {
         await this.assertPlug();
         await this.backend.disburseNeuron();
-        await getNeuron();
+        this.getNeuron();
     },
 
     async topUpNeuron() {
         await this.assertPlug();
-        await this.backend.topUpNeuron(this.getAmount());
-        await getNeuron();
+        let amount = this.getAmount()
+        let args = await this.backend.getTransferArgs(amount)
+        let res = await this.mbToken.icrc1_transfer(args);
+        console.log("transfer result:", res);
+        await this.backend.topUpNeuron(amount);
+        this.getNeuron();
     },
 
     async init() {

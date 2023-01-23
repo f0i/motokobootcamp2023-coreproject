@@ -2,6 +2,7 @@ import Time "mo:base/Time";
 import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
+import Float "mo:base/Float";
 
 module {
     public type Time = Time.Time;
@@ -92,13 +93,21 @@ module {
         neuron.status := #locked_for(newDuration);
     };
 
-    /// increase the staked amount in neuron
-    public func increaseAmount(neuron : Neuron, amount : Nat) {
-        // deduct age bonus
-        neuron.lockedSince := Time.now();
+    // Calculate voting poser
+    public func votingPower(neuron : Neuron) : Float {
+        // check if age is over 6 months
+        let sixMonths : Float = 6 * 30 * 24 * 60 * 60 * 1_000_000_000;
+        let eightYears : Float = 8 * 356 * 24 * 60 * 60 * 1_000_000_000;
+        let fourYears : Float = 4 * 356 * 24 * 60 * 60 * 1_000_000_000;
+        let delay : Float = Float.fromInt(getDissolveDelay(neuron));
+        if (delay < sixMonths) return 0;
+        let delayBonus = 1 + Float.max(delay / eightYears, 1.0);
 
-        // update the amount
-        let newAmount = neuron.amount + amount;
-        neuron.amount := newAmount;
+        let age : Float = Float.fromInt(getAge(neuron));
+        let ageBonus : Float = 1 + Float.max(age / fourYears * 0.25, 0.25);
+        let amount = Float.fromInt(neuron.amount);
+        let amountPower : Float = amount / 100_000_000;
+
+        return amountPower * delayBonus * ageBonus;
     };
 };
