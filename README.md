@@ -79,6 +79,10 @@ dfx canister --network ic install --mode auto dao_interface
 
 # or in one line
 dfx generate --network ic && dfx build --network ic && dfx canister --network ic install --mode auto dao_interface
+
+# blackhole the canister
+dfx canister --network=ic update-settings --set-controller e3mmv-5qaaa-aaaah-aadma-cai dao_webpage
+
 ```
 
 ## Links and Resources

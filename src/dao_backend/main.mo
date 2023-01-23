@@ -43,7 +43,7 @@ actor Self {
 
   // Storage of the data
   var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
-  var neurons = HashMap.HashMap<Principal, Neuron>(0, Principal.equal, Principal.hash);
+  var neurons = HashMap.fromIter<Principal, Neuron>(stableNeurons.vals(), stableNeurons.size(), Principal.equal, Principal.hash);
 
   // Locks
   var locks = HashMap.HashMap<Principal, Time>(0, Principal.equal, Principal.hash);
@@ -280,6 +280,14 @@ actor Self {
       Principal.fromActor(Self),
       amount,
     );
+  };
+
+  /// Get the voting power
+  public shared ({ caller }) func votingPower() : async Float {
+    switch (neurons.get(caller)) {
+      case (?neuron) { return Neuron.votingPower(neuron) };
+      case (null) { return 0.0 };
+    };
   };
 
   /// Get the current balance of MBT

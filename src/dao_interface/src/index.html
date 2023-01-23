@@ -66,7 +66,8 @@
       </button> <br>
       <br>
       <div x-show="$store.dao.neuron?.amount">
-        Balance <span x-text="Number($store.dao.neuron?.amount) / 100_000_000"></span> MBT <br>
+        Balance: <span x-text="Number($store.dao.neuron?.amount) / 100_000_000"></span> MBT <br>
+        Voting power: <span x-text="$store.dao.votingPower"></span> <br>
       </div>
       <div x-show="!$store.dao.neuron?.amount">
         <p>

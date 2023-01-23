@@ -54,6 +54,7 @@ Alpine.store('dao', {
     plug_available: !!window.ic?.plug,
     backend: dao_backend,
     mbToken: null,
+    votingPower: "-",
 
     plug_connect: async function () {
         if (!this.plug_available) throw "Plug not installed"
@@ -121,6 +122,7 @@ Alpine.store('dao', {
         let neuron = await this.backend.getNeuron();
         this.neuron = neuron[0];
         console.log("get neuron returned:", neuron);
+        this.getVotingPower();
     },
 
     getAmount() {
@@ -167,6 +169,11 @@ Alpine.store('dao', {
         await this.assertPlug();
         await this.backend.disburseNeuron();
         this.getNeuron();
+    },
+
+    async getVotingPower() {
+        await this.assertPlug();
+        this.votingPower = await this.backend.votingPower();
     },
 
     async topUpNeuron() {

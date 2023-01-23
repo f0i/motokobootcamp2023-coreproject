@@ -101,10 +101,10 @@ module {
         let fourYears : Float = 4 * 356 * 24 * 60 * 60 * 1_000_000_000;
         let delay : Float = Float.fromInt(getDissolveDelay(neuron));
         if (delay < sixMonths) return 0;
-        let delayBonus = 1 + Float.max(delay / eightYears, 1.0);
+        let delayBonus = 1 + Float.min(delay / eightYears, 1.0);
 
         let age : Float = Float.fromInt(getAge(neuron));
-        let ageBonus : Float = 1 + Float.max(age / fourYears * 0.25, 0.25);
+        let ageBonus : Float = 1 + Float.min(age / fourYears * 0.25, 0.25);
         let amount = Float.fromInt(neuron.amount);
         let amountPower : Float = amount / 100_000_000;
 
