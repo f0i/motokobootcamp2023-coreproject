@@ -21,6 +21,8 @@ import Array "mo:base/Array";
 import Webpage "webpage";
 import Parameter "parameter";
 import Neuron "neuron";
+import Lock "lock";
+import Time "mo:base/Time";
 
 actor Self {
   // Type alias for expressive index of inside the above Lists
@@ -29,7 +31,8 @@ actor Self {
   type Result<OK, ERR> = Result.Result<OK, ERR>;
   type StableProposal = Proposal.StableProposal;
   type Parameter = Parameter.Parameter;
-  type Neuron = Neuron.Neuron;
+  public type Neuron = Neuron.Neuron;
+  type Time = Time.Time;
 
   // Storage of the data during upgrades
   stable var stableProposals : [Proposal.StableProposal] = [];
@@ -42,12 +45,12 @@ actor Self {
   var proposals = Buffer.fromIter<Proposal.Proposal>(Iter.map(stableProposals.vals(), Proposal.fromStable));
   var neurons = HashMap.HashMap<Principal, Neuron>(0, Principal.equal, Principal.hash);
 
+  // Locks
+  var locks = HashMap.HashMap<Principal, Time>(0, Principal.equal, Principal.hash);
+
   /// update function to add a new proposal
   public shared ({ caller }) func submitProposal(text : Text) : async Result<ProposalIndex, Proposal.ProposeError> {
-    let balance = await mbToken.icrc1_balance_of({
-      owner = caller;
-      subaccount = null;
-    });
+    let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(caller, null));
 
     if (balance < 1) return #err(#notEnoughVotingPower);
 
@@ -93,10 +96,7 @@ actor Self {
   /// Submit your vote
   public shared ({ caller }) func vote(proposal_id : ProposalIndex, vote : Vote.Decision) : async Result.Result<(), Proposal.VotingError> {
 
-    let balance = await mbToken.icrc1_balance_of({
-      owner = caller;
-      subaccount = null;
-    });
+    let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(caller, null));
     let votingPower : Float = Float.fromInt(balance) / Float.pow(10, 8);
 
     let proposal = proposals.get(proposal_id);
@@ -119,39 +119,195 @@ actor Self {
     nyi(); // TODO: implement
   };
 
-  public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) {
+  /// Initiate a MBT transfer and create neuron
+  public shared ({ caller }) func createNeuron(amount : Nat, delay : Nat) : async Result<(), MbToken.TransferError> {
     if (amount < 10 ** 8) throw Error.reject("Amount too low");
+
+    // check if caller already has a neuron
+    switch (neurons.get(caller)) {
+      case (?neuron) {
+        throw Error.reject("Neuron already exists. Maybe use 'increase amount' instead?");
+      };
+      case (null) {};
+    };
+
+    if (not Lock.lock(locks, caller)) {
+      throw Error.reject("Transaction in progress");
+    };
 
     // Initiate transfer
     let status = await mbToken.icrc1_transfer(
-      MbToken.createTransferArgs(
+      MbToken.createRxTransferArgs(
         caller,
         Principal.fromActor(Self),
         amount,
       ),
     );
+    Lock.release(locks, caller);
+    switch (status) {
+      case (#err(error)) { return #err(error) };
+      case (#ok(_id)) {};
+    };
 
-    nyi(); // TODO: implement
-  };
-  public func dissolveNeuron() {
-    nyi(); // TODO: implement
+    // create neuron for user
+    let neuron = Neuron.create(amount, delay);
+    neurons.put(caller, neuron);
+
+    return #ok;
   };
 
+  /// Initiate a MBT transfer and top up neuron
+  public shared ({ caller }) func topUpNeuron(amount : Nat) : async Result<(), MbToken.TransferError> {
+    if (amount < 10 ** 8) throw Error.reject("Amount too low");
+
+    // check if caller already has a neuron
+    let neuron = switch (neurons.get(caller)) {
+      case (?neuron) {
+        neuron;
+      };
+      case (null) {
+        throw Error.reject("You don't have a neuron :(");
+      };
+    };
+
+    if (not Lock.lock(locks, caller)) {
+      throw Error.reject("Transaction in progress");
+    };
+
+    // Initiate transfer
+    let status = await mbToken.icrc1_transfer(
+      MbToken.createRxTransferArgs(
+        caller,
+        Principal.fromActor(Self),
+        amount,
+      ),
+    );
+    Lock.release(locks, caller);
+    switch (status) {
+      case (#err(error)) { return #err(error) };
+      case (#ok(_id)) {};
+    };
+
+    // update neuron amount
+    let newAmount = neuron.amount + amount;
+    neuron.amount := newAmount;
+
+    return #ok;
+  };
+
+  /// Get neuron information
+  public shared ({ caller }) func getNeuron() : async ?{
+    amount : Nat;
+    dissolving : Bool;
+    age : Nat;
+    delay : Nat;
+  } {
+    switch (neurons.get(caller)) {
+      case (?neuron) {
+        return ?{
+          amount = neuron.amount;
+          dissolving = Neuron.isDissolving(neuron);
+          age = Neuron.getAge(neuron);
+          delay = Neuron.getDissolveDelay(neuron);
+        };
+      };
+      case (null) {
+        null;
+      };
+    };
+  };
+
+  /// Lock neuron and increase dissolve delay
+  public shared ({ caller }) func lockNeuron(lockFor : Nat) : async () {
+    switch (neurons.get(caller)) {
+      case (?neuron) {
+        Neuron.lock(neuron, lockFor);
+      };
+      case (null) {
+        throw Error.reject("You don't have a neuron :(");
+
+      };
+    };
+  };
+
+  /// Start dissolving a neuron
+  public shared ({ caller }) func dissolveNeuron() : async () {
+    switch (neurons.get(caller)) {
+      case (?neuron) {
+        Neuron.dissolve(neuron);
+      };
+      case (null) {
+        throw Error.reject("You don't have a neuron :(");
+
+      };
+    };
+  };
+
+  /// Start dissolving a neuron
+  public shared ({ caller }) func disburseNeuron() : async Result<(), MbToken.TransferError> {
+    // check if neuron exists and is dissolved
+    let neuron = switch (neurons.get(caller)) {
+      case (?neuron) {
+        if (not Neuron.isDissolved(neuron)) throw Error.reject("Neuron is not dissolved");
+        neuron;
+      };
+      case (null) {
+        throw Error.reject("You don't have a neuron :(");
+      };
+    };
+
+    if (not Lock.lock(locks, caller)) {
+      throw Error.reject("Transaction in progress");
+    };
+
+    // Initiate transfer
+    let status = await mbToken.icrc1_transfer(
+      MbToken.createRxTransferArgs(
+        caller,
+        Principal.fromActor(Self),
+        neuron.amount,
+      ),
+    );
+
+    Lock.release(locks, caller);
+
+    // Check result
+    switch (status) {
+      case (#err(error)) { return #err(error) };
+      case (#ok(_id)) {};
+    };
+
+    neurons.delete(caller);
+
+    return #ok;
+  };
+
+  /// Get account for deposits
+  public shared ({ caller }) func getTransferArgs(amount : Nat) : async MbToken.TransferArgs {
+    if (amount < 10_000_000) throw Error.reject("Amount too low");
+    return MbToken.createRxTransferArgs(
+      caller,
+      Principal.fromActor(Self),
+      amount,
+    );
+  };
+
+  /// Get the current balance of MBT
+  /// Frontend could also request this directly from the token ledger
   public shared ({ caller }) func callerBalance() : async Nat {
-    let balance = await mbToken.icrc1_balance_of({
-      owner = caller;
-      subaccount = null;
-    });
+    let balance = await mbToken.icrc1_balance_of(MbToken.getAccount(caller, null));
     return balance;
   };
 
   // Handle upgrades
 
+  /// Store proposals and neurons in stable memory during upgrades
   system func preupgrade() {
     stableProposals := Iter.toArray(Iter.map(proposals.vals(), Proposal.toStable));
     stableNeurons := Iter.toArray(neurons.entries());
   };
 
+  // Reset stable variables after upgrade
   system func postupgrade() {
     stableProposals := [];
     stableNeurons := [];

@@ -33,7 +33,7 @@
 
     <template x-if="$store.dao.plug_available">
       <template x-if="!$store.dao.plug_connected">
-        <button @click="$store.dao.plug_connect()">Connect plug wallet</button>
+        <button @click="$store.dao.plug_connect()">Connect plug wallet 🔌</button>
       </template>
       <template x-if="!$store.dao.plug_connected">
         <span>Plug connected</span>
@@ -52,8 +52,65 @@
     <div>
       Current MB balance: <span x-text="$store.dao.mb_balance"></span>
       <button @click="$store.dao.updateBalance()">
-        update balance
+        update balance 🔃
       </button>
+    </div>
+    <br />
+    <br />
+
+    <!-- Neuron management -->
+    <div class="neuron">
+      <h4>Your neuron:</h4>
+      <button @click="$store.dao.getNeuron()">
+        update neuron info 🔃
+      </button> <br>
+      <br>
+      <div x-show="$store.dao.neuron?.amount">
+        Balance <span x-text="$store.dao.neuron?.amount"></span> <br>
+      </div>
+      <div x-show="!$store.dao.neuron?.amount">
+        <p>
+          Create a new neuron
+        </p>
+      </div>
+      <div x-show="$store.dao.neuron?.amount">
+        Amount: <span x-text="$store.dao.neuron?.amount"></span>
+        Locked: <span x-text="$store.dao.neuron?.locked"></span>
+        Dissolve delay: <span x-text="$store.dao.neuron?.delay"></span>
+        Age: <span x-text="$store.dao.neuron?.age"></span>
+      </div>
+
+      <label for="lock">Lock in days: &nbsp;</label>
+      <input alt="Lock for" type="number" min="0" max="1460" step="0.001" x-model="$store.dao.lockFor" />
+
+      <label for="amount">Add amount: &nbsp;</label>
+      <input alt="Amount" type="number" min="1.0" max="1000" step="0.1" x-model="$store.dao.amount" />
+
+      <br>
+      <br>
+
+      <div x-show="!$store.dao.neuron?.amount">
+        <button @click="$store.dao.createNeuron()">
+          Create a new neuron 🧠
+        </button> <br>
+      </div>
+      <div x-show="$store.dao.neuron?.amount">
+        <button @click="$store.dao.lockNeuron()">
+          Lock or increase dissolve delay 🔒
+        </button>
+        <button @click="$store.dao.dissolveNeuron()">
+          Start dissolve ⌛
+        </button>
+        <button @click="$store.dao.topUpNeuron()">
+          Add more tokens 💸
+        </button>
+        <button @click="$store.dao.disburseNeuron()">
+          Disburse neuron 💰
+        </button>
+
+      </div>
+
+
     </div>
     <br />
     <br />
@@ -69,7 +126,7 @@
           <section x-text="$store.dao.draft"></section> <br>
           <br>
           <button @click="$store.dao.submitProposal()">
-            Submit proposal!
+            Submit proposal! 📤
           </button>
         </div>
       </template>
@@ -80,7 +137,7 @@
 
     <div>
       <button @click="$store.dao.updateProposals()">
-        Update proposals
+        Update proposals 🔃
       </button>
     </div>
 

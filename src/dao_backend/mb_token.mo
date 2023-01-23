@@ -14,6 +14,8 @@ module MbToken {
     type Subaccount = Blob.Blob;
     type Account = { owner : Principal; subaccount : ?Subaccount };
 
+    let fee = 1000000;
+
     /// Arguments for a transfer operation
     public type TransferArgs = {
         from_subaccount : ?Subaccount;
@@ -42,8 +44,8 @@ module MbToken {
     };
 
     public type TransferResult = {
-        #Ok : TxIndex;
-        #Err : TransferError;
+        #ok : TxIndex;
+        #err : TransferError;
     };
 
     public type Balance = Nat;
@@ -60,8 +62,8 @@ module MbToken {
         return actor ("db3eq-6iaaa-aaaah-abz6a-cai");
     };
 
-    /// Helper to create a transfer
-    public func createTransferArgs(from : Principal, to : Principal, amount : Nat) : TransferArgs {
+    /// Helper to create a transfer into a subaccount
+    public func createRxTransferArgs(from : Principal, to : Principal, amount : Nat) : TransferArgs {
         return {
             amount = amount;
             to = {
@@ -71,8 +73,24 @@ module MbToken {
             created_at_time = ?Nat64.fromIntWrap(Time.now());
 
             from_subaccount = null;
-            fee = null;
-            memo = ?Text.encodeUtf8("Create neuron in Motoko Bootcamp Core-Project DAO");
+            fee = ?fee;
+            memo = ?Text.encodeUtf8("Create neuron");
+        };
+    };
+
+    /// Helper to create a transfer out of a subaccount
+    public func createTxTransferArgs(from : Principal, to : Principal, amount : Nat) : TransferArgs {
+        return {
+            amount = amount - fee;
+            to = {
+                owner = to;
+                subaccount = null;
+            };
+            created_at_time = ?Nat64.fromIntWrap(Time.now());
+
+            from_subaccount = ?principalToSubaccount(from);
+            fee = ?fee;
+            memo = ?Text.encodeUtf8("Disburse neuron");
         };
     };
 
@@ -92,6 +110,17 @@ module MbToken {
         let hashSum = idHash.sum();
         let crc32Bytes = beBytes(CRC32.ofArray(hashSum));
         Blob.fromArray(Array.append(crc32Bytes, hashSum));
+    };
+
+    public func getAccount(owner : Principal, subaccountOwner : ?Principal) : Account {
+        let subaccount = switch (subaccountOwner) {
+            case (?principal) { ?principalToSubaccount(principal) };
+            case (null) { null };
+        };
+        return {
+            owner = owner;
+            subaccount = subaccount;
+        };
     };
 
 };

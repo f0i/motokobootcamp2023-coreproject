@@ -4,7 +4,7 @@ import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 
 module {
-    type Time = Time.Time;
+    public type Time = Time.Time;
 
     let maxDissolveDelay : Nat = 126144000000000000; // 4 years: 4 * 365 * 24 * 60 * 60 * 1000000000;
 
@@ -65,6 +65,14 @@ module {
                     return 0;
                 };
             };
+        };
+    };
+
+    /// Check if a neuron is dissolving
+    public func isDissolving(neuron : Neuron) : Bool {
+        switch (neuron.status) {
+            case (#locked_for(_)) { return false };
+            case (#locked_until(_)) { return true };
         };
     };
 
